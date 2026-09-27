@@ -1,0 +1,2 @@
+# 打包依赖（仅发布时需要）：pip install -r requirements-build.txt
+pyinstaller>=6.0

@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 虚拟环境
+.venv/
+
+# PyInstaller 产物与发布归档（安装包上传 GitHub Releases，不入库）
+build/
+dist/
+release/
+updater/build/
+updater/dist/
+
+# 用户数据（更新/发布永不覆盖，不入库）
+data/backups/
+data/app_version.txt
+data/boot_error.log
+data/plugin_load_errors.log
+.update/
+*.update.pid
+
+# 打包临时
+_do_update.bat
+_updater_replace.bat
+_release_base/
+_e2e/
+_e2e_gui/
