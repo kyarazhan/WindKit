@@ -52,6 +52,12 @@ WindAnaly 的成熟范式完成重组，作为后续迭代的新基线：
 | 产物 | `release/1.0.1/`：WindKit-1.0.1.zip（82.0 MB）+ 1.0.0-1.0.1-patch.zip（19 文件 21.8 MB，含一次性运行时基线切换）+ versions.json + 源码归档（1.1 MB） |
 | 端到端 | 备份的 1.0.0 安装 + 真实补丁 → 真实 updater.exe 应用 → v1.0.1 启动存活、**装载成功 15 / 失败 0**、备份与 pending 清理全过 |
 | 教训入库 | 「开发模式全绿 ≠ 打包模式可用」：插件动态 import 的模块必须显式入包（D9 之后做构建缓存/增量瘦身时同样要守这条），新增 test_build 固化 |
+| 上传 GitHub | 仓库 `kyarazhan/WindKit`（便携 git 推送，merge 掉网页生成的 README）；Release v1.0.1 资产已上传（全量 82MB + 增量 21.8MB + versions.json，`tools/publish_release.py` 凭据走 credential manager，可安全重跑）；**真实源在线验证通过**：模拟 v1.0.0 后台查询 13s 发现 v1.0.1 并写 available.json |
+
+### 0.3 发版后遗留（下版前处理）
+
+- v1.0.1 补丁 21.8MB 中运行时占绝对大头——D9 构建缓存落地后回落到业务真实变更；
+- v1.0.0 的 GitHub Release 未发布（其全量包含插件 bug，已被 1.0.1 取代，无需补发）。
 
 ---
 
@@ -219,9 +225,9 @@ pytest。WindAnaly 已有 GitHub Actions CI（windows-latest + offscreen pytest�
    ```
    （全量/增量均可缺省其一，更新器自动规划；增量包命名 `<旧>-<新>-patch.zip`
    由 release.py 自动 diff 产出）
-5. ⚠️ **首次发版前必须确认** `updater/sources.json` 指向真实存在且有
-   Release 的仓库（当前 `kyarazhan/WindKit` 未必已创建），否则改为内网源。
-   本轮冒烟已实测：仓库不存在时更新器优雅退出并落日志，不崩溃。
+5. ~~⚠️ 首次发版前必须确认 `updater/sources.json` 指向真实存在且有
+   Release 的仓库~~（✅ 已解决：`kyarazhan/WindKit` Release v1.0.1 已上线，
+   真实源在线查询验证通过）。
 
 ---
 
@@ -295,12 +301,12 @@ pytest。WindAnaly 已有 GitHub Actions CI（windows-latest + offscreen pytest�
 |---|---|---|---|
 | 顶层布局 | main.py + windkit/ 嵌套包 | 根级 core/ ui/ plugins/ updater/ ✅ | 维持 |
 | 死代码 | ≥1,100 行（_boundary_centroid 840 + external_tab 120 + 零散） | **0 ✅** | 维持 |
-| 自动更新 | 无（仅 QSS 残留） | updater.exe 全链路打通，三模式端到端验证 ✅ | 真实更新源上线（首个远程升级） |
-| 打包 | 不存在（requirements 引用幻影 build.py） | release.py 一条命令发版 ✅ | 增量补丁 KB 级（D9） |
+| 自动更新 | 无（仅 QSS 残留） | updater.exe 全链路打通，三模式端到端验证 ✅；**真实 GitHub 源已上线** ✅ | 持续滚动发版 |
+| 打包 | 不存在（requirements 引用幻影 build.py） | release.py + publish_release.py 全自动 ✅ | 增量补丁 KB 级（D9） |
 | 测试 | 33 项 | **46 项**（更新器 10 + 打包清单 2） | 50+（S1/S2 插件级） |
 | 已知功能 bug | 4（P1~P4） | 3（P1~P3 已登记待修）+ 打包装载 bug 已修 ✅ | 0 |
-| git/CI | 无 | .gitignore 就位 | git + CI 上线（S1/S3） |
-| 已发布版本 | 0 | 1.0.0 / 1.0.1（release/ 本地归档，真实补丁升级验证） | 持续滚动 |
+| git/CI | 无 | **已 git 化并推送 GitHub** ✅（便携 git，远程 kyarazhan/WindKit） | GitHub Actions CI（S3） |
+| 已发布版本 | 0 | 1.0.0（本地）/ **1.0.1（GitHub Releases 在线）** | 持续滚动 |
 
 ---
 

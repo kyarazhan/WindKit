@@ -7,7 +7,7 @@
 
 ```
 改 core/version.py → run_checks 全绿 → python tools/release.py <版本> --notes "说明"
-→ 上传 release/<版本>/ 产物到更新源（versions.json 必传）
+→ git push origin main v<版本> → python tools/publish_release.py <版本>
 ```
 
 ## 1. 发版前
@@ -19,8 +19,8 @@
    python -X utf8 tools\verify_updater_install.py   # 真实 updater.exe 本地安装端到端
    python -X utf8 tools\verify_updater_gui.py       # 独立运行+在线更新 GUI 端到端
    ```
-3. 确认 `updater/sources.json` 指向真实更新源（当前 `kyarazhan/WindKit`，
-   仓库不存在则先建仓库或改为内网 HTTP/UNC 源——改文件即可，无需动代码）。
+3. 确认 `updater/sources.json` 指向真实更新源（当前 `kyarazhan/WindKit`
+   GitHub Releases，已上线可用；改内网源只需改此文件，无需动代码）。
 
 ## 2. 发版（用系统 Python，含 tkinter；.venv 3.13 无 tkinter）
 
@@ -33,30 +33,43 @@ python tools/release.py <版本> --notes "说明" --skip-build   # dist 已是�
 冻结 exe 冒烟 → 完整包 zip → 基线重演 + 文件级 diff 增量包（有上一版时）→
 `versions.json` → 源码归档。
 
-## 3. 产物与上传（release/<版本>/）
+产物约定（release/<版本>/）：
 
-| 文件 | 用途 | 上传 |
-|---|---|---|
-| `versions.json` | 更新源版本索引 | **必传**（与包同目录） |
-| `WindKit-<版本>.zip` | 完整包（新用户首装 / 增量不可达时兜底） | 首版必传；此后按需 |
-| `<旧>-<新>-patch.zip` | 增量包（老用户升级，体积小） | 建议每版都传 |
-| `WindKit_v<版本>_source_<日期>.zip` | 源码归档 | 按需 |
+| 文件 | 用途 |
+|---|---|
+| `versions.json` | 更新源版本索引（上传 Release 时必传） |
+| `WindKit-<版本>.zip` | 完整包，带顶层 `WindKit/` 文件夹（更新器安装时自动去前缀） |
+| `<旧>-<新>-patch.zip` | 增量包（文件级 diff；`data/app_version.txt` 每包强制携带） |
+| `WindKit_v<版本>_source_<日期>.zip` | 源码归档（本地/Release 留存） |
 
-- zip 带顶层 `WindKit/` 文件夹，更新器安装时自动去前缀；
-- `data/app_version.txt` 随每个包强制写入新版本号（更新器识别已装版本的依据，
-  `data/` 其余用户数据永不进包/永不被覆盖）；
+- `data/app_version.txt` 随每个包写入新版本号（更新器识别已装版本的依据）；
+  `data/` 其余用户数据永不进包、安装时永不覆盖；
 - 每次安装前更新器自动备份 `data/` → `data/backups/pre_update_<时间戳>.zip`。
 
-## 4. 发版后验证（首次接真实更新源时必做）
+## 3. 上传 GitHub（仓库 + Release）
+
+```
+git push origin main v<版本>                    # 代码 + 标签（便携 git：
+                                                # Project\.tools\PortableGit）
+python tools/publish_release.py <版本>          # 创建 Release 并上传
+                                                # versions.json / 全量包 / 增量包
+```
+
+凭据走 git credential manager（与 push 同源）；脚本对同名资产先删后传，可安全重跑。
+上传完成后真实源即生效——可用「模拟旧版本后台查询」验证（见 §4）。
+
+## 4. 发版后验证
 
 1. 装上一版 → 主程序「帮助 → 检查更新」→ 应列出最新版并可完成升级；
 2. 老版本 + 增量链逐级补齐（多跳）与全量包一步到位各验一次；
 3. 双击 updater.exe（无参数）独立运行：在线检查 + 本地包安装各验一次；
-4. 升级后确认 `data/turbines.json` 用户改动仍在、`data/backups/` 出现备份。
+4. 升级后确认 `data/turbines.json` 用户改动仍在、`data/backups/` 出现备份；
+5. GitHub 源在线验证：后台查询应发现新版并写 `.update/available.json`
+   （v1.0.1 上线时已验证 ✅）。
 
 ## 5. 历史发布记录
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
-| 1.0.0 | 2026-09-27 | 首个公开发布版本（详见 release/1.0.0/versions.json） |
-| 1.0.1 | 2026-09-27 | 修复打包版 13 个插件装载失败（core/ui 子模块显式入包）；插件装载结果落日志 plugin_load_errors.log（详见 release/1.0.1/versions.json） |
+| 1.0.0 | 2026-09-27 | 首个公开发布版本（本地归档；未上 GitHub——含插件装载 bug，被 1.0.1 取代） |
+| 1.0.1 | 2026-09-27 | 修复打包版 13 个插件装载失败（core/ui 子模块显式入包）；插件装载结果落日志。**已发布 GitHub Releases**：代码+tag 已推、Release 资产（全量/增量/versions.json）已上传，真实源在线查询验证通过 |
