@@ -6,7 +6,7 @@
 3. 卡片展示工具名 + 一行说明（HINT 或模块首行 docstring），二者均可见；
 4. 重复点击同一工具复用窗口；
 5. 主窗口关闭联动全部工具窗口与子进程退出；
-6. 全部 15 个工具真实可构造；
+6. 全部 11 个工具真实可构造；
 7. 右键菜单（Tab 4 动作 / 卡片 5 动作）+ 浅色 QMenu；
 8. 覆盖层（name / desc / icon / order）持久化往返；
 9. 排序：override.order 优先，未设回退目录前缀。
@@ -31,7 +31,7 @@ from ui.tool_item import ToolItem  # noqa: E402
 from ui.toolbox_window import ToolboxWindow  # noqa: E402
 
 PLUGINS = os.path.abspath(os.path.join(ROOT, 'plugins'))
-TOTAL_TOOLS = 15
+TOTAL_TOOLS = 11
 
 
 @pytest.fixture(scope='module')
@@ -179,6 +179,30 @@ def test_discover_no_failures():
     groups, failures = d.discover()
     assert failures == [], failures
     assert sum(len(i) for _, i in groups) == TOTAL_TOOLS
+
+
+def test_legacy_plugin_cleanup_removed_on_discover(tmp_path, monkeypatch):
+    """v1.0.2 下线插件的残留文件在装载前被清理（更新包只覆盖不删除）。"""
+    import ui.tool_dispatcher as td
+
+    monkeypatch.setattr(
+        td, 'resource_path',
+        lambda *parts: os.path.join(str(tmp_path), *parts))
+    legacy = tmp_path / 'plugins' / '02_风资源分析' / '10_turbulence.py'
+    legacy.parent.mkdir(parents=True)
+    legacy.write_text('x', encoding='utf-8')
+    d06 = tmp_path / 'plugins' / '06_M1拆分'
+    (d06 / '__pycache__').mkdir(parents=True)
+    (d06 / '__pycache__' / 'm1.pyc').write_bytes(b'x')
+    keep = tmp_path / 'plugins' / '02_风资源分析' / '40_diurnal.py'
+    keep.write_text('y', encoding='utf-8')
+
+    d = ToolDispatcher(str(tmp_path / 'plugins'))
+    d.discover()
+
+    assert not legacy.exists(), '下线插件残留未被清理'
+    assert not d06.exists(), '空分组目录未被清理'
+    assert keep.exists(), '误删了在营插件'
 
 
 def test_dispatcher_extracts_desc_from_docstring():

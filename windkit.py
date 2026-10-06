@@ -83,6 +83,12 @@ def main() -> None:
     # updater.exe --config 兼容路径应用）
     if _handle_update_pending():
         sys.exit(0)
+    # v1.0.2 机型库精简迁移（幂等，见 core/turbine.ensure_seed_migrated）
+    try:
+        from core.turbine import ensure_seed_migrated
+        ensure_seed_migrated()
+    except Exception:
+        pass
     _run_gui()
 
 

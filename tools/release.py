@@ -137,20 +137,23 @@ def make_patch(new: str, vdir: str) -> str | None:
             zf.extractall(base_dir)
     print(f'baseline: v{base_v} + {len(patches)} patch(es)')
 
-    old = {}
-    for r, d, fs in os.walk(base_dir):
-        d[:] = [x for x in d if x not in ('.update', 'data')]
-        for f in fs:
-            p = os.path.join(r, f)
-            old[os.path.relpath(p, base_dir).replace('\\', '/')] = sha256(p)
-    changed = []
-    for r, d, fs in os.walk(DIST):
-        d[:] = [x for x in d if x not in ('.update', 'data')]
-        for f in fs:
-            p = os.path.join(r, f)
-            rel = os.path.relpath(p, DIST).replace('\\', '/')
-            if old.get(rel) != sha256(p):
-                changed.append(rel)
+    def scan(root):
+        out = {}
+        for r, d, fs in os.walk(root):
+            rel = os.path.relpath(r, root)
+            if rel == '.':
+                # 只排除安装根顶层的 data/（用户数据，更新永不覆盖）；
+                # 嵌套的 _internal/data/ 是随包只读资源，必须进补丁
+                d[:] = [x for x in d if x not in ('.update', 'data')]
+            else:
+                d[:] = [x for x in d if x != '.update']
+            for f in fs:
+                p = os.path.join(r, f)
+                out[os.path.relpath(p, root).replace('\\', '/')] = sha256(p)
+        return out
+
+    old = scan(base_dir)
+    changed = [rel for rel, h in scan(DIST).items() if old.get(rel) != h]
     # data/ 用户数据整体排除（更新永不覆盖），但 app_version.txt 是程序
     # 元数据，必须随每个补丁更新——独立更新器靠它识别已装版本
     changed.append('data/app_version.txt')

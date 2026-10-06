@@ -1,4 +1,4 @@
-"""机型库：54 机型数据 + 扫风面积自动计算 + 增删。"""
+"""机型库：机型数据 + 扫风面积自动计算 + 增删改。"""
 
 import pandas as pd
 from PySide6.QtWidgets import (QGridLayout, QMessageBox, QPushButton, QWidget)
@@ -12,7 +12,7 @@ class TurbineDbTab(ModuleTab):
     TITLE = '机型库'
 
     def __init__(self):
-        super().__init__(hint='S = π(D/2)²，s = S/P；内置 54 机型，可增删改')
+        super().__init__(hint='S = π(D/2)²，s = S/P；内置机型可增删改')
 
         self.db = TurbineDB()
 

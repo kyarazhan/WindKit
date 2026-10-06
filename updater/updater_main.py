@@ -40,7 +40,10 @@ from version import compare_versions, is_newer
 
 APP_EXE_DEFAULT = 'WindKit.exe'
 
-# data/ 下更新时必须保留的用户数据（turbines.json=机型库，updater.log=更新日志）
+# data/ 下更新时必须保留的用户数据（turbines.json=机型库，updater.log=更新日志）。
+# 保护仅限安装根顶层的 data/（用户数据区）；嵌套的 _internal/data/ 是随包
+# 只读资源，必须允许随更新刷新（'data' in parts 的写法会把后者也挡住，
+# 导致精简/修订过的种子永远发不出去——1.0.2 修复）。
 _PRESERVE = {
     'turbines.json', 'updater.log',
 }
@@ -181,7 +184,7 @@ def extract_preserve_data(zip_path, app_dir):
             parts = [p for p in rel.split('/') if p and p not in ('.', '..')]
             if not parts:
                 continue
-            if 'data' in parts and parts[-1] in _PRESERVE:
+            if parts[0] == 'data' and parts[-1] in _PRESERVE:
                 continue
             target = os.path.join(app_dir, *parts)
             if not os.path.abspath(target).startswith(

@@ -17,6 +17,7 @@ discover() 返回 (分组列表, 装载失败列表)：
 import hashlib
 import os
 import re
+import shutil
 import traceback
 from dataclasses import dataclass
 from importlib.util import module_from_spec, spec_from_file_location
@@ -30,6 +31,39 @@ from ui.base_tab import ModuleTab
 ICON = resource_path('icon.png')
 
 _PREFIX = re.compile(r'^(\d+)_')
+
+# v1.0.2 下线的插件。更新包（全量/增量）只会覆盖、不会删除文件，老安装里
+# 的残留必须在此显式清理（每次装载前执行，幂等）；保留数个版本后可随
+# 清理批次移除本段。
+_LEGACY_PLUGIN_FILES = (
+    ('plugins', '02_风资源分析', '10_turbulence.py'),
+    ('plugins', '02_风资源分析', '20_long_term.py'),
+    ('plugins', '02_风资源分析', '30_extreme_wind.py'),
+    ('plugins', '06_M1拆分', '10_m1_split.py'),
+)
+_LEGACY_PLUGIN_DIRS = (
+    ('plugins', '06_M1拆分'),
+)
+
+
+def cleanup_legacy_plugins() -> None:
+    """删除已下线插件的残留文件与空分组目录（见 _LEGACY_PLUGIN_FILES）。"""
+    for rel in _LEGACY_PLUGIN_FILES:
+        try:
+            p = resource_path(*rel)
+            if os.path.isfile(p):
+                os.remove(p)
+        except OSError:
+            pass
+    for rel in _LEGACY_PLUGIN_DIRS:
+        try:
+            d = resource_path(*rel)
+            # 目录里只剩 __pycache__ 时整目录删除
+            if os.path.isdir(d) and not [f for f in os.listdir(d)
+                                         if f != '__pycache__']:
+                shutil.rmtree(d, ignore_errors=True)
+        except OSError:
+            pass
 
 
 def _strip_prefix(name: str) -> str:
@@ -93,6 +127,7 @@ class ToolDispatcher:
         主程序既可通过索引获取 ToolInfo（含 hint 等信息），
         也可调用 :meth:`get_tool_info` 按名查询。
         """
+        cleanup_legacy_plugins()
         groups, self._failures = self._discover_raw()
         self.groups = groups
         main_groups = []

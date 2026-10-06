@@ -15,10 +15,10 @@
 | `windkit.py` | 唯一入口（更新交接 + QApplication 装配 + 强制浅色调色板 + QSS） |
 | `core/` | 纯计算与数据层，**无 UI 依赖**（numpy/pandas/openpyxl/stdlib） |
 | `ui/` | 主窗口 + 控件层（调度器、卡片、表格、覆盖层/参数持久化、UpdateMixin） |
-| `plugins/` | 6 个分类目录、15 个原生工具页（协议见 §3） |
+| `plugins/` | 5 个分类目录、11 个原生工具页（协议见 §3） |
 | `updater/` | 独立更新器 updater.exe 源码（与主程序进程解耦，与 WindAnaly 同机制） |
 | `tools/` | 发布流水线（release.py）与更新器端到端验证脚本 |
-| `tests/` | 44 项 pytest 回归（core 公式 Excel 锚点 + UI 布局/调度/持久化 + 更新器 10 项） |
+| `tests/` | 47 项 pytest 回归（core 公式 Excel 锚点 + UI 布局/调度/持久化 + 更新器 10 项 + 打包清单 2 项 + 下线插件清理） |
 | `data/` | 用户数据：turbines.json（更新永不覆盖）+ samples/（只读样例） |
 | `release/` | 本地发布归档（每版本：完整包 / 增量包 / versions.json / 源码归档） |
 
@@ -44,7 +44,7 @@ WindKit/
 │   ├── tool_params.py    #   工具输入参数记忆（同一配置根 tool_params.json）
 │   ├── update_tools.py   #   UpdateMixin：拉起 updater.exe + 状态栏提示
 │   ├── widgets.py _dialogs.py _style.py theme.qss
-├── plugins/              # 6 分类 15 插件（01_快速计算 … 06_M1拆分）
+├── plugins/              # 5 分类 11 插件（01_快速计算 … 05_坐标转换）
 ├── updater/              # 独立更新器（tkinter，纯标准库）
 │   ├── updater_main.py   #   界面/下载/安装/备份/恢复/updater.exe 自替换
 │   ├── feed.py           #   多源版本索引（versions.json / GitHub Releases / UNC）
